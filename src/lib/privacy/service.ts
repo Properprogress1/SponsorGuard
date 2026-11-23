@@ -6,6 +6,10 @@ type PrivacyDatabase = {
     Tables: Record<never, never>;
     Views: Record<never, never>;
     Functions: {
+      recover_interrupted_evidence: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
       purge_security_rate_buckets: {
         Args: Record<string, never>;
         Returns: undefined;

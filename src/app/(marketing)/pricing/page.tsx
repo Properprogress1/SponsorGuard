@@ -31,6 +31,7 @@ const plans = [
     details: [
       "Up to 20 sponsored workers",
       "Right-to-work records and reporting",
+      "Weekly action queue and CSV change review",
       "Private document vault and audit packs",
       "Passport ledger verification",
     ],
@@ -47,6 +48,7 @@ const plans = [
       "Expiring Compliance Passport sharing",
       "Continuity Guard",
       "Extended workforce map",
+      "Secure evidence requests",
     ],
     href: "/sign-up",
     cta: "Create an account for Pro",

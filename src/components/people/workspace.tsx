@@ -1,3 +1,4 @@
+import { workFields } from "@/lib/operations/changes";
 import { UpgradePrompt } from "@/components/billing/workspace";
 import type { BillingSummary } from "@/lib/billing/model";
 import Link from "next/link";
@@ -250,6 +251,19 @@ export async function PeopleWorkspace({
                     <dd>{fieldValue(field, row[field.name], options)}</dd>
                   </div>
                 ))}
+                {category === "workers" &&
+                  Object.entries(workFields).map(([name, label]) => (
+                    <div key={name}>
+                      <dt className="text-sm font-semibold text-slate-800">
+                        {label}
+                      </dt>
+                      <dd>
+                        {row[name] == null
+                          ? "No value on file"
+                          : String(row[name])}
+                      </dd>
+                    </div>
+                  ))}
                 <div className="sm:col-span-2">
                   <dt className="text-sm font-semibold text-slate-800">
                     Record ID

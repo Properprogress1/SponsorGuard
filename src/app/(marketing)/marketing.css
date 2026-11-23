@@ -1,16 +1,16 @@
 .marketing {
-  --paper: #f7f7ef;
-  --surface: #fffefa;
-  --ink: #182a24;
-  --muted: #41554b;
-  --forest: #183e32;
-  --border: #c4cfc4;
-  --soft: #e8eee3;
+  --paper: #f7f3ea;
+  --surface: #fffcf7;
+  --ink: #202431;
+  --muted: #535062;
+  --aubergine: #62367b;
+  --border: #d2c5d6;
+  --soft: #eee4f0;
   background: var(--paper);
   color: var(--ink);
   display: flex;
   flex-direction: column;
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: "Atkinson Hyperlegible Next", system-ui, sans-serif;
   min-height: 100svh;
 }
 
@@ -78,7 +78,7 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.5rem;
-  background: var(--forest);
+  background: var(--aubergine);
   color: white;
 }
 
@@ -127,24 +127,24 @@
 }
 
 .marketing-button-primary {
-  background: var(--forest);
+  background: var(--aubergine);
   color: white;
 }
 
 .marketing-button-outline {
-  border-color: #607466;
+  border-color: #695770;
   background: transparent;
   color: var(--ink);
 }
 
 .marketing-button-on-dark {
-  background: #eff4df;
-  color: #1e3b2d;
+  background: #e8c76b;
+  color: #202431;
 }
 
 .marketing-button-primary:focus-visible,
 .marketing-button-on-dark:focus-visible {
-  outline-color: var(--focus-on-button, var(--forest));
+  outline-color: var(--focus-on-button, var(--aubergine));
 }
 
 .marketing-hero {
@@ -162,7 +162,7 @@
 
 .marketing h1,
 .marketing h2 {
-  font-family: "DM Serif Display", Georgia, serif;
+  font-family: "Instrument Serif", Georgia, serif;
   font-weight: 400;
   letter-spacing: -0.025em;
 }
@@ -179,7 +179,7 @@
 }
 
 .marketing .marketing-eyebrow {
-  color: #345849;
+  color: #62367b;
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -199,18 +199,10 @@
   gap: 0.75rem;
 }
 
-.marketing-hero-image {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  border-radius: 0.85rem;
-}
-
 .marketing-passport {
-  background: var(--forest);
-  color: #fbfdf6;
-  --focus-on-button: #eff4df;
+  background: var(--aubergine);
+  color: #fffaf1;
+  --focus-on-button: #e8c76b;
 }
 
 .marketing-passport-inner {
@@ -222,8 +214,8 @@
 }
 
 .marketing-passport-icon {
-  background: #2a5344;
-  color: #eff4df;
+  background: #3c2348;
+  color: #e8c76b;
   display: grid;
   place-items: center;
   width: 4rem;
@@ -232,7 +224,7 @@
 }
 
 .marketing-passport p {
-  color: #edf2e8;
+  color: #f5eaf3;
   margin-top: 0.45rem;
   max-width: 64ch;
 }
@@ -260,7 +252,7 @@
 }
 
 .marketing-card > svg {
-  color: var(--forest);
+  color: var(--aubergine);
   margin-bottom: 1rem;
 }
 
@@ -297,10 +289,10 @@
 }
 
 .pricing-card-pro {
-  background: var(--forest);
+  background: var(--aubergine);
   color: white;
-  border-color: var(--forest);
-  --focus-on-button: #eff4df;
+  border-color: var(--aubergine);
+  --focus-on-button: #e8c76b;
 }
 
 .pricing-price span {
@@ -316,8 +308,8 @@
 }
 
 .pricing-card-pro .pricing-annual {
-  color: #edf2e8;
-  border-color: #719184;
+  color: #f5eaf3;
+  border-color: #b88ac5;
 }
 
 .pricing-card ul {
@@ -354,7 +346,7 @@
 
 .health-check-disclaimer {
   padding: 0.85rem 1rem;
-  border-left: 3px solid var(--forest);
+  border-left: 3px solid var(--aubergine);
   background: var(--soft);
   font-size: 0.95rem;
   max-width: 62ch;
@@ -368,7 +360,7 @@
 }
 
 .health-check legend {
-  font-family: "DM Serif Display", Georgia, serif;
+  font-family: "Instrument Serif", Georgia, serif;
   font-size: 1.65rem;
   margin-bottom: 0.3rem;
 }
@@ -396,7 +388,7 @@
   height: 1.25rem;
   margin-top: 0.15rem;
   flex: none;
-  accent-color: var(--forest);
+  accent-color: var(--aubergine);
 }
 
 .health-check-item strong,
@@ -478,4 +470,43 @@
   .marketing-narrow {
     width: calc(100% - 2rem);
   }
+}
+
+.marketing-preview {
+  display: grid;
+  gap: 0.8rem;
+  align-content: center;
+  background: #202431;
+  color: #fffaf1;
+  border-radius: 1.15rem;
+  padding: clamp(1.25rem, 4vw, 2.75rem);
+  box-shadow: 0 20px 38px #20243126;
+}
+.marketing-preview h2 {
+  font:
+    400 clamp(1.9rem, 3vw, 2.8rem) "Instrument Serif",
+    Georgia,
+    serif;
+  line-height: 1;
+}
+.marketing-preview-label {
+  color: #e8c76b;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.marketing-preview li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.8rem;
+  row-gap: 0.125rem;
+  padding: 0.75rem;
+  border-top: 1px solid #716a82;
+}
+.marketing-preview li svg {
+  grid-row: span 2;
+  color: #e8c76b;
+}
+.marketing-preview li span {
+  color: #f1dce9;
+  font-size: 0.875rem;
 }

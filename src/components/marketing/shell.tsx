@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { BookOpenText } from "lucide-react";
+import { NotebookTabs } from "lucide-react";
 import { recordsDisclaimer, siteName } from "@/lib/marketing/site";
 
 function Brand() {
   return (
     <Link href="/" className="marketing-brand">
       <span className="marketing-brand-mark">
-        <BookOpenText size={19} aria-hidden="true" />
+        <NotebookTabs size={19} aria-hidden="true" />
       </span>
       {siteName}
     </Link>

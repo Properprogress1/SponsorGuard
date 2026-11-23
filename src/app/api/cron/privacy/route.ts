@@ -22,6 +22,7 @@ export async function GET(request: Request) {
   const erased = await service.rpc("purge_privacy_due", {
     run_on: londonDate(),
   });
+  const evidence = await service.rpc("recover_interrupted_evidence");
   const cleanup = await service.rpc("claim_privacy_storage");
   if (cleanup.error) {
     securityLog({ event: "scheduled_job", job: "privacy", outcome: "retry" });
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
     if (settled.error) retry++;
     else removed++;
   }
-  const incomplete = erased.error || retry || limiter.error;
+  const incomplete = erased.error || retry || limiter.error || evidence.error;
   securityLog({
     event: "scheduled_job",
     job: "privacy",

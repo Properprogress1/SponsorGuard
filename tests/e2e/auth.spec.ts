@@ -1466,3 +1466,89 @@ test("export and erase a synthetic worker, remove stored copies and verify the l
   await page.goto(`/workspace/${organisation}/passport`);
   await expect(page.getByRole("status")).toContainText("4 entries checked");
 });
+
+test("review the weekly queue and approve a worker CSV change", async ({
+  page,
+}) => {
+  const service = fixtureClient();
+  const email = fixtureEmail();
+  const account = await service.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+  if (account.error || !account.data.user)
+    throw new Error("Could not create the operations test account.");
+  const { organisation, worker } = await vaultFixture(
+    service,
+    "Synthetic Operations",
+  );
+  const member = await service.from("memberships").insert({
+    organisation_id: organisation,
+    user_id: account.data.user.id,
+    role: "owner",
+  });
+  const check = await service.from("rtw_checks").insert({
+    organisation_id: organisation,
+    sponsored_worker_id: worker,
+    checked_on: "2025-01-01",
+    follow_up_on: "2025-02-01",
+    method: "online",
+  });
+  if (member.error || check.error)
+    throw new Error("Could not prepare the operations test records.");
+
+  await signIn(page, email);
+  await enrol(page);
+  await expect(page).toHaveURL(`/workspace/${organisation}/dashboard`);
+  await expect(
+    page.getByRole("region", { name: "Weekly action queue" }),
+  ).toContainText("1 action overdue or due within seven days");
+  await page.getByRole("link", { name: "View weekly action queue" }).click();
+  await page.getByRole("link", { name: "Open action discussion" }).click();
+  await page.getByLabel("Assign to").selectOption(account.data.user.id);
+  await page.getByRole("button", { name: "Save assignment" }).click();
+  await expect(page.getByRole("status")).toContainText("Action updated");
+  await page.getByRole("button", { name: "Escalate", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Clear escalation" }),
+  ).toBeVisible();
+  await page
+    .getByLabel("Comment", { exact: true })
+    .fill("Synthetic handover note");
+  await page.getByRole("button", { name: "Add comment" }).click();
+  await expect(
+    page.getByText("Synthetic handover note", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Hand back to client" }).click();
+  await expect(
+    page.getByRole("button", { name: "Acknowledge hand-back" }),
+  ).toBeVisible();
+
+  await page.getByRole("link", { name: "Change review", exact: true }).click();
+  await page.getByLabel("Worker changes CSV").setInputFiles({
+    name: "synthetic-work-changes.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(
+      "Reference,Role,Weekly hours,Work location\nVAULT-1,Analyst,37.50,London",
+    ),
+  });
+  await page.getByRole("button", { name: "Preview changes" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "1 worker record to review",
+  );
+  await page.getByRole("button", { name: "Apply this change" }).click();
+  await expect(
+    page.getByText("Worker record updated.", { exact: true }),
+  ).toBeVisible();
+  const saved = await service
+    .from("sponsored_workers")
+    .select("work_role,work_hours,work_location")
+    .eq("id", worker)
+    .single();
+  expect(saved.data).toEqual({
+    work_role: "Analyst",
+    work_hours: 37.5,
+    work_location: "London",
+  });
+});

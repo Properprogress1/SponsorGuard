@@ -87,6 +87,8 @@ with `npm ci`.
 - [Launch checklist and operational runbooks](docs/launch-checklist.md)
 - [UK deployment and environment setup](docs/deployment.md)
 - [Security review and deployment controls](docs/security-review.md)
+- [Weekly actions, evidence and change review](docs/operations-workflows.md)
+- [Brand direction and paid pilot](docs/paid-pilot.md)
 - [Testing conventions](docs/testing.md)
 
 Read [AGENTS.md](AGENTS.md) before making changes.

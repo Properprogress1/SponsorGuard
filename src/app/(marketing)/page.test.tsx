@@ -6,7 +6,7 @@ it("describes the sponsor records product and links to the free health check", (
   render(<Home />);
   expect(
     screen.getByRole("heading", {
-      name: "Keep your sponsor records in order.",
+      name: "Keep your sponsorship records in order.",
       level: 1,
     }),
   ).toBeVisible();

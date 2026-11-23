@@ -22,7 +22,8 @@ export async function proxy(request: NextRequest) {
     authPaths.has(path) ||
     path === "/workspace" ||
     path.startsWith("/workspace/");
-  const privatePage = refreshSession || path === "/share";
+  const privatePage =
+    refreshSession || path === "/share" || path === "/evidence";
   const headers = new Headers(request.headers);
   const nonce = randomBytes(18).toString("base64");
   const csp = pageCsp(nonce, process.env.NODE_ENV === "development");

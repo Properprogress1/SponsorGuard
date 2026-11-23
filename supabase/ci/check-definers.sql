@@ -11,13 +11,13 @@ declare
     'public.revoke_passport_share', 'public.save_audit_pack_checklist',
     'public.save_health_checklist', 'public.set_privacy_person',
     'public.set_privacy_retention', 'public.update_partner_link', 'public.verify_chain',
-    'public.workspace_access', 'public.workspace_billing', 'public.workspace_partner_brand',
+    'public.review_evidence_request', 'public.weekly_action_roster', 'public.workspace_access', 'public.workspace_billing', 'public.workspace_partner_brand',
     'sponsor_guard_private.has_any_plan', 'sponsor_guard_private.has_direct_role',
     'sponsor_guard_private.has_plan', 'sponsor_guard_private.has_role',
     'sponsor_guard_private.is_member', 'sponsor_guard_private.may_read_document_object'
   ];
   service_only constant text[] := array[
-    'issue_passport_share', 'probe_passport_share', 'open_passport_share',
+    'recover_interrupted_evidence', 'reserve_evidence_upload', 'finish_evidence_upload', 'issue_passport_share', 'probe_passport_share', 'open_passport_share',
     'queue_document_expiry_notifications', 'claim_notification_digests',
     'finish_notification_digests', 'unsubscribe_notification_digests',
     'claim_audit_pack', 'audit_pack_snapshot', 'finish_audit_pack',
