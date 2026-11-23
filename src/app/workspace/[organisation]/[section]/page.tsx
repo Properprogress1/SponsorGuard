@@ -270,8 +270,7 @@ export default async function WorkspacePage({
           <WeeklyQueue
             tenant={organisation}
             role={membership.role}
-            full
-            selected={(await searchParams).item}
+            params={await searchParams}
           />
         )}
         {workspaceAllowed && section === "changes" && (

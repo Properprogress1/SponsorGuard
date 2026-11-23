@@ -2,7 +2,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 grant usage on schema extensions to anon, authenticated, service_role;
 set local search_path = public, extensions;
-select plan(25);
+select plan(28);
 
 insert into auth.users (id) values
  ('30000000-0000-4000-8000-000000000001'), ('30000000-0000-4000-8000-000000000002'),
@@ -32,9 +32,13 @@ set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"30000000-0000-4000-8000-000000000001","aal":"aal2"}',true);
 select results_eq('select record_id from weekly_action_sources', $$ values ('30000000-0000-4000-8000-000000000013'::uuid) $$,
  'queue returns only the latest check and never another tenant');
+select is((select count(*) from weekly_queue_items where assignee is null),1::bigint,
+ 'unassigned includes a visible source without an assignment row');
 select lives_ok($$ insert into weekly_actions(organisation_id,kind,record_id,assignee,escalated) values
  ('30000000-0000-4000-8000-000000000010','rtw','30000000-0000-4000-8000-000000000013','30000000-0000-4000-8000-000000000002',true) $$,
  'owner assigns and escalates a real action');
+select is((select count(*) from weekly_queue_items where assignee = auth.uid()),0::bigint,
+ 'my actions does not include work assigned to a different member');
 select throws_ok($$ update weekly_actions set assignee = '30000000-0000-4000-8000-000000000003' $$,'23503',null,
  'an assignee from another organisation is rejected');
 select throws_ok('select token_hash from evidence_requests','42501',null,'manager never reads bearer hashes through API');
@@ -53,6 +57,8 @@ select throws_ok($$ insert into action_comments(organisation_id,kind,record_id,b
  'a viewer cannot comment');
 select set_config('request.jwt.claims','{"sub":"30000000-0000-4000-8000-000000000003","aal":"aal2"}',true);
 select is((select count(*) from action_comments),0::bigint,'another tenant cannot read comments');
+select is((select count(*) from weekly_queue_items where handed_back),0::bigint,
+ 'hand-back state is private to the client organisation');
 select is((select count(id) from evidence_requests),0::bigint,'another tenant cannot read requests');
 reset role;
 

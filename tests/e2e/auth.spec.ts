@@ -1504,8 +1504,10 @@ test("review the weekly queue and approve a worker CSV change", async ({
   await expect(
     page.getByRole("region", { name: "Weekly action queue" }),
   ).toContainText("1 action overdue or due within seven days");
-  await page.getByRole("link", { name: "View weekly action queue" }).click();
-  await page.getByRole("link", { name: "Open action discussion" }).click();
+  await page.getByRole("link", { name: "Overdue 1 View actions" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Action discussion" }),
+  ).toHaveCount(0);
   await page.getByLabel("Assign to").selectOption(account.data.user.id);
   await page.getByRole("button", { name: "Save assignment" }).click();
   await expect(page.getByRole("status")).toContainText("Action updated");
@@ -1513,6 +1515,13 @@ test("review the weekly queue and approve a worker CSV change", async ({
   await expect(
     page.getByRole("button", { name: "Clear escalation" }),
   ).toBeVisible();
+  await page.getByRole("link", { name: "My actions" }).click();
+  await expect(page.getByRole("link", { name: "My actions" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await page.getByRole("link", { name: "Open action discussion" }).click();
+  await expect(page).toHaveURL(/filter=mine.*item=/);
   await page
     .getByLabel("Comment", { exact: true })
     .fill("Synthetic handover note");
@@ -1523,6 +1532,15 @@ test("review the weekly queue and approve a worker CSV change", async ({
   await page.getByRole("button", { name: "Hand back to client" }).click();
   await expect(
     page.getByRole("button", { name: "Acknowledge hand-back" }),
+  ).toBeVisible();
+
+  await page.getByRole("link", { name: "Handed back", exact: true }).click();
+  await expect(
+    page.getByRole("link", { name: "Open action discussion" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Unassigned", exact: true }).click();
+  await expect(
+    page.getByText("There are no actions in this view."),
   ).toBeVisible();
 
   await page.getByRole("link", { name: "Change review", exact: true }).click();

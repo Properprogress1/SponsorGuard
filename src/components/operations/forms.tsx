@@ -27,12 +27,14 @@ export function QueueControls({
   assignment,
   roster,
   manager,
+  placement,
 }: {
   tenant: string;
   item: QueueItem;
   assignment?: Assignment;
   roster: TeamMember[];
   manager: boolean;
+  placement: "row" | "discussion";
 }) {
   const [result, action, pending] = useActionState(
     updateAction.bind(null, tenant, item.kind, item.record_id),
@@ -41,7 +43,7 @@ export function QueueControls({
   return (
     <form action={action} className="grid gap-3">
       <fieldset disabled={pending} className="grid gap-3">
-        {manager && roster.length > 0 && (
+        {placement === "row" && manager && roster.length > 0 && (
           <div className="flex flex-wrap items-end gap-2">
             <label className="grid gap-1">
               Assign to
@@ -64,7 +66,7 @@ export function QueueControls({
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          {manager && (
+          {placement === "row" && manager && (
             <Button
               name="operation"
               value={assignment?.escalated ? "clear_escalation" : "escalate"}
@@ -73,29 +75,35 @@ export function QueueControls({
               {assignment?.escalated ? "Clear escalation" : "Escalate"}
             </Button>
           )}
-          <Button
-            name="operation"
-            value={assignment?.handed_back ? "accept_handover" : "hand_back"}
-            variant="secondary"
-          >
-            {assignment?.handed_back
-              ? "Acknowledge hand-back"
-              : "Hand back to client"}
-          </Button>
+          {placement === "discussion" && (
+            <Button
+              name="operation"
+              value={assignment?.handed_back ? "accept_handover" : "hand_back"}
+              variant="secondary"
+            >
+              {assignment?.handed_back
+                ? "Acknowledge hand-back"
+                : "Hand back to client"}
+            </Button>
+          )}
         </div>
-        <label className="grid gap-1">
-          Comment
-          <textarea
-            name="comment"
-            maxLength={500}
-            rows={2}
-            className={fieldStyle}
-            placeholder="Add a note about the next action. Keep personal details out of comments."
-          />
-        </label>
-        <Button name="operation" value="comment" className="w-fit">
-          Add comment
-        </Button>
+        {placement === "discussion" && (
+          <>
+            <label className="grid gap-1">
+              Comment
+              <textarea
+                name="comment"
+                maxLength={500}
+                rows={2}
+                className={fieldStyle}
+                placeholder="Add a note about the next action. Keep personal details out of comments."
+              />
+            </label>
+            <Button name="operation" value="comment" className="w-fit">
+              Add comment
+            </Button>
+          </>
+        )}
       </fieldset>
       <ResultMessage result={result} />
     </form>
