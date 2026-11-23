@@ -24,7 +24,7 @@ On Vercel the limiter uses the platform's `x-vercel-forwarded-for` header. On
 other hosts, set `RATE_LIMIT_TRUST_PROXY=1` only if the app is reachable solely
 through a proxy that overwrites `X-Forwarded-For` with one verified client
 address. In other cases the limiter uses a shared network bucket. The table
-holds HMACs and counters. The hourly privacy job deletes expired buckets and
+holds HMACs and counters. The scheduled privacy job deletes expired buckets and
 must be enabled for production. Deploy the security migration before the app
 so protected actions can use the limiter immediately.
 

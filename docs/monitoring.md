@@ -14,6 +14,8 @@ Page after three consecutive failures and verify recovery from a second network.
 
 ## Signals and response
 
+The audit-pack and privacy thresholds below apply to the commercial cadence. In a personal test deployment using the checked-in daily schedules, check for an audit-pack invocation by 10:00 UTC and a privacy invocation by 11:00 UTC. One audit-pack invocation only handles one queued pack. [Deployment](deployment.md)
+
 | Signal                                   | Starting trigger                                                                                             | Where to look                                                                                                                    |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 | Web availability and database saturation | Liveness page, sustained elevated 5xx or latency, database connections or disk approaching capacity          | External monitor, Vercel Observability and Supabase metrics.                                                                     |
