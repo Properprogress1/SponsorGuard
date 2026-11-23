@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+coverage
+playwright-report
+test-results
+auth-test-results
+package-lock.json
+next-env.d.ts
+supabase/.temp
+supabase/.branches

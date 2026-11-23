@@ -1,0 +1,11 @@
+begin;
+drop table public.tasks;
+drop table public.reporting_events;
+drop function sponsor_guard_private.create_reporting_task();
+drop function sponsor_guard_private.set_reporting_deadline();
+drop function public.compute_reporting_due_date(text, date);
+drop table public.bank_holidays;
+drop table public.bank_holiday_years;
+drop table public.reporting_rules;
+drop function sponsor_guard_private.guard_reporting_rule_history();
+commit;

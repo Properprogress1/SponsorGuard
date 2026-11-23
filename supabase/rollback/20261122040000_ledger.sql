@@ -1,0 +1,15 @@
+begin;
+drop trigger rtw_ledger on public.rtw_checks;
+drop trigger reporting_ledger on public.reporting_events;
+drop trigger documents_ledger on public.documents;
+drop trigger key_personnel_ledger on public.key_personnel;
+drop function public.verify_chain(uuid);
+drop function sponsor_guard_private.capture_ledger_change();
+drop function sponsor_guard_private.append_ledger_entry(uuid, uuid, public.ledger_record_type, public.ledger_operation);
+drop table public.ledger_entries;
+drop function sponsor_guard_private.block_ledger_mutation();
+drop function sponsor_guard_private.ledger_hash(bytea, jsonb, timestamptz, uuid);
+drop function sponsor_guard_private.ledger_metadata(uuid, bigint, public.ledger_record_type, public.ledger_operation);
+drop type public.ledger_record_type;
+drop type public.ledger_operation;
+commit;

@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, types and unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+  security:
+    name: Dependency and secret scanning
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run audit:dependencies
+      - name: Scan Git history for secrets
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo:ro" \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/repo \
+            ghcr.io/gitleaks/gitleaks@sha256:b109bc5f8f76a38196a3e413704fc5b9e3c32360bce4e4b603bd6f45b3721dbb \
+            git --log-opts=--all --redact=100 --no-banner --config /repo/.gitleaks.toml /repo
+
+  database:
+    name: Migrations and pgTAP
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Install pgTAP in PostgreSQL and its test runner on the host
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker exec --user root "$POSTGRES_CONTAINER" apt-get update
+          docker exec --user root "$POSTGRES_CONTAINER" apt-get install -y --no-install-recommends postgresql-17-pgtap
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client libtap-parser-sourcehandler-pgtap-perl
+      - name: Apply migrations to the empty service database
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/ci/bootstrap-auth.sql -f supabase/ci/bootstrap-storage.sql
+          npx supabase migration up --remote="$DATABASE_URL" --yes
+      - name: Verify migrations are tracked and can be run again
+        run: npx supabase migration up --remote="$DATABASE_URL" --yes
+      - name: Check RLS and privileged function grants
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/ci/check-rls.sql -f supabase/ci/check-definers.sql
+      - name: Run database assertions (fails on SQL errors or failed assertions)
+        run: pg_prove --host 127.0.0.1 --port 5432 --username postgres --dbname postgres --verbose --recurse supabase/tests
+
+  browser:
+    name: Production build and Playwright with Supabase Auth
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      SPONSORGUARD_STORAGE_E2E: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start local Supabase for browser tests
+        shell: bash
+        run: |
+          if ! npx supabase start > "$RUNNER_TEMP/supabase-start.log" 2>&1; then
+            tail -40 "$RUNNER_TEMP/supabase-start.log"
+            exit 1
+          fi
+          npx supabase status -o env > "$RUNNER_TEMP/supabase.env"
+          source "$RUNNER_TEMP/supabase.env"
+          public_key="${ANON_KEY:-${PUBLISHABLE_KEY:-}}"
+          service_key="${SERVICE_ROLE_KEY:-${SECRET_KEY:-}}"
+          test -n "$API_URL"
+          test -n "$public_key"
+          test -n "$service_key"
+          printf '::add-mask::%s\n' "$service_key"
+          {
+            printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n' "$API_URL"
+            printf 'NEXT_PUBLIC_SUPABASE_ANON_KEY=%s\n' "$public_key"
+            printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_key"
+          } >> "$GITHUB_ENV"
+      - name: Verify document policies against the Supabase Storage schema
+        run: npx supabase test db supabase/tests/database/documents.test.sql
+      - run: npm run test:e2e
+      - run: npm run test:lighthouse
+      - run: npm run test:e2e:auth
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

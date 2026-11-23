@@ -1,0 +1,12 @@
+begin;
+drop function public.open_passport_share(text, text, integer);
+drop function public.probe_passport_share(text);
+drop function public.revoke_passport_share(uuid, uuid);
+drop function public.issue_passport_share(uuid, uuid, text, text, text, date, uuid[], uuid[], date, date);
+drop table public.passport_share_access;
+drop table public.passport_shares;
+drop trigger zz_document_share_scope on public.documents;
+drop trigger zz_rtw_share_scope on public.rtw_checks;
+drop function sponsor_guard_private.capture_ledger_person();
+drop table public.ledger_entry_people;
+commit;

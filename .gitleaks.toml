@@ -1,0 +1,13 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Generated dependencies, caches and browser reports"
+paths = ['''(^|/)(node_modules|\.next|\.supabase|coverage|test-results|auth-test-results|playwright-report)(/|$)''']
+
+[[allowlists]]
+description = "Exact inert Stripe SDK fixture in historical test revisions"
+condition = "AND"
+regexTarget = "secret"
+paths = ['''^src/lib/billing/webhook\.test\.ts$''']
+regexes = ['''^sk_test_syntheticfixtur[e]$''']

@@ -1,0 +1,12 @@
+begin;
+drop table public.audit_log;
+drop table public.memberships;
+drop table public.profiles;
+drop table public.organisations;
+drop function sponsor_guard_private.can_manage_membership(uuid, public.membership_role);
+drop function sponsor_guard_private.has_role(uuid, public.membership_role[]);
+drop function sponsor_guard_private.is_member(uuid);
+drop schema sponsor_guard_private;
+drop type public.audit_event;
+drop type public.membership_role;
+commit;
