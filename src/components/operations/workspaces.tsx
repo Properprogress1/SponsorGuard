@@ -6,7 +6,6 @@ import {
   workspaceMemberships,
   type Role,
 } from "@/lib/auth/access";
-import { londonDate } from "@/lib/dates";
 import { documentTypes, isDocumentType } from "@/lib/documents/model";
 import { londonTime } from "@/lib/passport/model";
 import {
@@ -17,9 +16,15 @@ import { evidenceScanner } from "@/lib/operations/scanner";
 import {
   dueLabel,
   getWeeklyQueue,
+  getQueueSummary,
   queueLabels,
-  type QueueKind,
 } from "@/lib/operations/queue";
+import {
+  parseQueueFilter,
+  parseQueuePage,
+  queueFilters,
+  queueHref,
+} from "@/lib/operations/queue-filters";
 import {
   EvidenceDecision,
   EvidenceRequestForm,
@@ -30,102 +35,175 @@ import {
 export async function WeeklyQueue({
   tenant,
   role,
-  selected,
-  full = false,
+  params,
 }: {
   tenant: string;
   role: Role;
-  selected?: string | string[];
-  full?: boolean;
+  params?: Record<string, string | string[] | undefined>;
 }) {
-  const queue = await getWeeklyQueue(tenant);
+  const full = Boolean(params);
+  const RowHeading = full ? "h2" : "h3";
+  const filter = parseQueueFilter(params?.filter);
+  const page = parseQueuePage(params?.page);
+  const size = full ? 25 : 5;
   const { client } = await requireWorkspaceSession();
   const manager = isManager(role);
-  const selectedItem = queue.rows.find(
-    (item) => `${item.kind}:${item.record_id}` === selected,
-  );
-  const rosterResult =
-    full && manager
-      ? await client
-          .rpc("weekly_action_roster", { tenant })
-          .returns<TeamMember[]>()
-      : null;
+  const [queue, summary, rosterResult] = await Promise.all([
+    getWeeklyQueue(tenant, filter, page, size),
+    full ? [] : getQueueSummary(tenant),
+    manager
+      ? client.rpc("weekly_action_roster", { tenant }).returns<TeamMember[]>()
+      : null,
+  ]);
   if (rosterResult?.error) throw new Error("Could not load the team roster.");
   const roster: TeamMember[] = Array.isArray(rosterResult?.data)
     ? rosterResult.data
     : [];
+  const selected = queue.rows.find(
+    (item) => `${item.kind}:${item.record_id}` === params?.item,
+  );
   const thread =
-    selectedItem &&
+    selected &&
     (await client
       .from("action_comments")
       .select("id,body,created_at")
       .match({
         organisation_id: tenant,
-        kind: selectedItem.kind,
-        record_id: selectedItem.record_id,
+        kind: selected.kind,
+        record_id: selected.record_id,
       })
       .order("created_at", { ascending: false })
       .limit(30)
       .returns<{ id: string; body: string; created_at: string }[]>());
-  if (thread && thread.error)
-    throw new Error("Could not load the action comments.");
-  const assignments = new Map(
-    queue.assignments.map((row) => [`${row.kind}:${row.record_id}`, row]),
-  );
-  const prefix = `/workspace/${tenant}`;
-  const today = londonDate();
+  if (thread?.error) throw new Error("Could not load the action comments.");
+
   return (
     <section
       aria-label="Weekly action queue"
-      className="mt-6 grid max-w-4xl gap-4"
+      className="mt-6 grid max-w-5xl gap-5"
     >
-      {!full && <h2 className="text-xl font-semibold">This week’s actions</h2>}
-      <p>
+      {!full && (
+        <>
+          <h2 className="text-xl font-semibold">This week’s actions</h2>
+          <ul className="grid gap-3 sm:grid-cols-3">
+            {summary.map(({ filter: category, count }) => (
+              <li key={category}>
+                <Link
+                  href={queueHref(tenant, category)}
+                  className="grid h-full gap-1 rounded-xl border bg-card p-4 hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <span className="text-sm font-semibold">
+                    {queueFilters[category]}
+                  </span>
+                  <span
+                    className={
+                      category === "overdue" && count
+                        ? "text-3xl font-semibold text-destructive"
+                        : "text-3xl font-semibold text-primary"
+                    }
+                  >
+                    {count}
+                  </span>
+                  <span className="text-sm underline underline-offset-4">
+                    View actions
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {full && (
+        <nav aria-label="Action filters" className="flex flex-wrap gap-2">
+          {Object.entries(queueFilters).map(([value, label]) => {
+            const next = parseQueueFilter(value);
+            return (
+              <Link
+                key={value}
+                href={queueHref(tenant, next)}
+                aria-current={next === filter ? "page" : undefined}
+                className="rounded-lg border bg-card px-3 py-2 text-sm font-semibold hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+      <p className="text-sm text-muted-foreground">
         {queue.count} {queue.count === 1 ? "action" : "actions"} overdue or due
-        within seven days.
+        within seven days{filter !== "all" && " in this view"}.
       </p>
+      {queue.rows.length === 0 && (
+        <p className="rounded-lg border bg-card p-4">
+          {page > 1 ? (
+            <>
+              This page has no actions.{" "}
+              <Link
+                href={queueHref(tenant, filter)}
+                className="text-primary underline"
+              >
+                Return to the first page
+              </Link>
+              .
+            </>
+          ) : (
+            "There are no actions in this view."
+          )}
+        </p>
+      )}
       {queue.rows.length > 0 && (
-        <ul className="grid gap-2">
-          {queue.rows.slice(0, full ? 50 : 5).map((item) => {
+        <ul className="grid gap-3">
+          {queue.rows.map((item) => {
             const label = queueLabels[item.kind];
             const id = `${item.kind}:${item.record_id}`;
-            const assigned = assignments.get(id);
             const name = roster.find(
-              (member) => member.user_id === assigned?.assignee,
+              (member) => member.user_id === item.assignee,
             )?.display_name;
             const href =
               item.kind === "rtw"
-                ? `${prefix}/people?category=rtw&record=${item.record_id}`
-                : `${prefix}/${label.section}`;
+                ? `/workspace/${tenant}/people?category=rtw&record=${item.record_id}`
+                : `/workspace/${tenant}/${label.section}`;
             return (
-              <li key={id} className="grid gap-2 rounded-lg border bg-card p-4">
+              <li key={id} className="grid gap-3 rounded-xl border bg-card p-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="font-semibold">
+                  <RowHeading className="font-semibold">
                     <Link
                       className="underline decoration-primary/50 underline-offset-4"
                       href={href}
                     >
                       {label.title}
                     </Link>
-                  </h3>
-                  <span
+                  </RowHeading>
+                  <time
+                    dateTime={item.due_on}
                     className={
-                      item.due_on < today
+                      item.due_on < queue.today
                         ? "font-semibold text-destructive"
                         : "font-semibold text-[#8a560e]"
                     }
                   >
                     {dueLabel(item.due_on)}
-                  </span>
+                  </time>
                 </div>
-                <p className="text-sm">
-                  {assigned?.assignee ? (name ?? "Assigned") : "Unassigned"}
-                  {assigned?.escalated && " · Escalated"}
-                  {assigned?.handed_back && " · Handed back"}
+                <p className="text-sm text-muted-foreground">
+                  {item.assignee ? (name ?? "Assigned") : "Unassigned"}
+                  {item.escalated && " · Escalated"}
+                  {item.handed_back && " · Handed back"}
                 </p>
+                {full && manager && (
+                  <QueueControls
+                    tenant={tenant}
+                    item={item}
+                    assignment={item}
+                    manager
+                    roster={roster}
+                    placement="row"
+                  />
+                )}
                 {full && (
                   <Link
-                    href={`${prefix}/actions?item=${encodeURIComponent(id)}#action-detail`}
+                    href={queueHref(tenant, filter, page, id)}
                     className="w-fit text-primary underline"
                   >
                     Open action discussion
@@ -136,29 +214,50 @@ export async function WeeklyQueue({
           })}
         </ul>
       )}
-      {full && queue.count > queue.rows.length && (
-        <p>
-          Showing the 50 earliest actions. Open the original records for later
-          items.
-        </p>
+      {full && (page > 1 || queue.count > size) && (
+        <nav
+          aria-label="Action pages"
+          className="flex flex-wrap items-center gap-4 text-sm"
+        >
+          {page > 1 && (
+            <Link
+              className="text-primary underline"
+              href={queueHref(tenant, filter, page - 1)}
+            >
+              Previous page
+            </Link>
+          )}
+          {queue.rows.length > 0 && (
+            <span>
+              Page {page} of {Math.ceil(queue.count / size)}
+            </span>
+          )}
+          {page * size < queue.count && (
+            <Link
+              className="text-primary underline"
+              href={queueHref(tenant, filter, page + 1)}
+            >
+              Next page
+            </Link>
+          )}
+        </nav>
       )}
       {!full && (
         <Link
           className="w-fit font-semibold text-primary underline"
-          href={`${prefix}/actions`}
+          href={queueHref(tenant, "all")}
         >
           View weekly action queue
         </Link>
       )}
-      {selectedItem && (
+      {selected && (
         <section
           id="action-detail"
-          className="grid gap-3 rounded-lg border bg-card p-5"
+          className="grid gap-3 rounded-xl border bg-card p-5"
         >
           <h2 className="text-lg font-semibold">Action discussion</h2>
           <p>
-            {queueLabels[selectedItem.kind].title} ·{" "}
-            {dueLabel(selectedItem.due_on)}
+            {queueLabels[selected.kind].title} · {dueLabel(selected.due_on)}
           </p>
           {thread && thread.data.length > 0 && (
             <ul className="grid gap-2">
@@ -176,14 +275,13 @@ export async function WeeklyQueue({
           )}
           {canEditRecords(role) && (
             <QueueControls
-              key={selectedItem.record_id}
+              key={`${selected.kind}:${selected.record_id}`}
               tenant={tenant}
-              item={selectedItem}
-              assignment={assignments.get(
-                `${selectedItem.kind}:${selectedItem.record_id}`,
-              )}
+              item={selected}
+              assignment={selected}
               manager={manager}
               roster={roster}
+              placement="discussion"
             />
           )}
         </section>
@@ -216,7 +314,7 @@ export async function AdviserQueue() {
 }
 
 async function ClientSummary({ id, name }: { id: string; name: string }) {
-  const queue = await getWeeklyQueue(id);
+  const queue = await getWeeklyQueue(id, "all", 1, 3);
   return (
     <article className="rounded-lg border bg-card p-4">
       <h2 className="font-semibold">
@@ -231,9 +329,9 @@ async function ClientSummary({ id, name }: { id: string; name: string }) {
         {queue.count} {queue.count === 1 ? "action" : "actions"} overdue or due
         within seven days.
       </p>
-      {queue.rows.slice(0, 3).map((row) => (
+      {queue.rows.map((row) => (
         <p key={row.record_id} className="mt-2 text-sm">
-          {queueLabels[row.kind as QueueKind].title} · {dueLabel(row.due_on)}
+          {queueLabels[row.kind].title} · {dueLabel(row.due_on)}
         </p>
       ))}
     </article>
