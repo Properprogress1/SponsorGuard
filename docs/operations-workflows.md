@@ -13,4 +13,4 @@ For paid workspaces, the dashboard links directly to Overdue, Due in the next se
 
 Set `EVIDENCE_SCANNER_URL` to an approved HTTPS scanner and store `EVIDENCE_SCANNER_TOKEN` in the server secret store. The app sends a POST with bearer authentication, the validated MIME type and file bytes. Return HTTP 200 with JSON `{"verdict":"clean"}` or `{"verdict":"infected"}`. Only an explicit clean result permits Storage upload. The internal document upload stub is separate. Choose a provider with suitable data handling, region and retention terms before using real records.
 
-Exercise both verdicts, scanner failure, expiring and revoked links, and permitted and denied review downloads in staging. Confirm that the hourly privacy cron removes rejected and interrupted files. Workflows can use synthetic data while the scanner and pilots are being set up.
+Exercise both verdicts, scanner failure, expiring and revoked links, and permitted and denied review downloads in staging. Confirm that the scheduled privacy job removes rejected and interrupted files. Workflows can use synthetic data while the scanner and pilots are being set up.

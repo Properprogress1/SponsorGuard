@@ -12,7 +12,7 @@ The database takes a consistent snapshot when generation starts. The ledger summ
 
 ## Operations
 
-Run the database migration and configure the existing Supabase service-role key and `CRON_SECRET`. Vercel runs the worker every five minutes on plans that support that interval. On other hosts, schedule `GET /api/cron/audit-packs` with the `Authorization: Bearer <CRON_SECRET>` header. Each invocation claims one job. The request that queues the pack only writes a job record. Expired worker leases can be reclaimed. Repeated or stale attempts cannot publish the same job.
+Run the database migration and configure the existing Supabase service-role key and `CRON_SECRET`. The checked-in Vercel schedule invokes the worker daily in the 09:00 UTC hour. For commercial deployments, configure the five-minute schedule in the deployment guide. [Deployment](deployment.md) On other hosts, schedule `GET /api/cron/audit-packs` with the `Authorization: Bearer <CRON_SECRET>` header. Each invocation claims one job. The request that queues the pack only writes a job record. Expired worker leases can be reclaimed. Repeated or stale attempts cannot publish the same job.
 
 The worker supports up to 10,000 index records, 40 MiB of source documents and a 45 MiB archive. Configure the deployment's Storage upload limit to allow 45 MiB. Oversized requests show a failed job with the size-limit message.
 
