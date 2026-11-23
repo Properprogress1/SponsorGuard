@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -22,13 +21,13 @@ const features = [
     icon: Network,
   },
   {
-    title: "Reporting and handovers",
-    text: "Track reporting dates and open tasks. Record key personnel and manage handover checklists.",
+    title: "Weekly actions and handovers",
+    text: "See what is due this week, assign an owner and hand actions back to the client after review.",
     icon: CalendarClock,
   },
   {
     title: "Document vault and audit packs",
-    text: "Keep documents together, track expiry dates and export an audit pack when records are needed.",
+    text: "Request a file securely, review it before filing and export an audit pack when records are needed.",
     icon: FolderLock,
   },
 ];
@@ -39,11 +38,10 @@ export default function Home() {
       <section className="marketing-wrap marketing-hero">
         <div className="marketing-hero-copy">
           <p className="marketing-eyebrow">For UK sponsor licence holders</p>
-          <h1>Keep your sponsor records in order.</h1>
+          <h1>Keep your sponsorship records in order.</h1>
           <p className="marketing-lead">
-            Bring worker records, right-to-work checks and reporting dates
-            together. Share time-stamped evidence for Home Office visits or when
-            advisers and clients ask.
+            See what’s due, collect evidence from your team and share a
+            time-stamped record with your adviser.
           </p>
           <div className="marketing-actions">
             <Link
@@ -61,15 +59,27 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        <Image
-          preload
-          src="/marketing/records-desk.webp"
-          width={1320}
-          height={990}
-          sizes="(max-width: 760px) 100vw, 48vw"
-          alt="A green binder and organised paper files on a desk by a window"
-          className="marketing-hero-image"
-        />
+        <section className="marketing-preview" aria-labelledby="example-queue">
+          <p className="marketing-preview-label">Example workspace</p>
+          <h2 id="example-queue">This week’s actions</h2>
+          <ul>
+            <li>
+              <CalendarClock size={20} aria-hidden="true" />
+              <strong>Complete a reporting task</strong>
+              <span>Due today · Assigned</span>
+            </li>
+            <li>
+              <FolderLock size={20} aria-hidden="true" />
+              <strong>Review a document expiry</strong>
+              <span>Due Friday · Unassigned</span>
+            </li>
+            <li>
+              <NotebookTabs size={20} aria-hidden="true" />
+              <strong>Follow up a right-to-work check</strong>
+              <span>Handed back for review</span>
+            </li>
+          </ul>
+        </section>
       </section>
       <section
         className="marketing-passport"

@@ -6,7 +6,9 @@ test("the landing page links to the public health check and pricing", async ({
   await page.goto("/");
   await expect(page).toHaveTitle(/Records for UK sponsor licence holders/);
   await expect(
-    page.getByRole("heading", { name: "Keep your sponsor records in order." }),
+    page.getByRole("heading", {
+      name: "Keep your sponsorship records in order.",
+    }),
   ).toBeVisible();
   await page.getByRole("link", { name: "View pricing" }).click();
   await expect(page.getByText("£990 billed annually")).toBeVisible();

@@ -6,6 +6,7 @@ export type RateOperation =
   | "auth_mfa_enrol"
   | "auth_mfa_verify"
   | "auth_password_update"
+  | "evidence_upload"
   | "passport_read"
   | "passport_manage"
   | "partner_invite_read";

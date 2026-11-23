@@ -13,7 +13,7 @@ Release owner, candidate Git SHA, target date and evidence location to be record
 
 - [ ] Product records review outcomes for all three `VERIFY` seeds, approved effective versions, close-out evidence and England and Wales holiday coverage. [Seed rules review](seed-rules-review.md)
 - [ ] Engineering signs off fresh-account onboarding, role guards, worker creation and plan enforcement via API, reporting and tasks, document uploads and signed downloads, Passport creation and revocation, ledger verification and a downloadable audit pack.
-- [ ] Engineering and privacy sign off partner consent and revocation, exports, erasure, retention holds and cleanup. Review the malware scanning stub and document the launch decision for uploads. [Privacy data map](privacy.md), [Document vault](documents.md)
+- [ ] Engineering and privacy sign off partner consent and revocation, exports, erasure, retention holds and cleanup. Review the internal upload scanner stub. Exercise the separate fail-closed scanner before enabling external evidence uploads. [Privacy data map](privacy.md), [Document vault](documents.md)
 - [ ] Billing tests checkout, portal, signature verification and replay with test credentials. Confirm live GBP prices, webhook configuration and operational ownership before enabling live payments. [Billing](billing.md)
 - [ ] Product and privacy review customer-facing Terms, Privacy, DPA, trademark clearance and published wording. Confirm statements describe record tracking without guarantees, immigration advice or scores. Check data processing and subprocessor arrangements with the adviser.
 

@@ -1,3 +1,9 @@
+import {
+  AdviserQueue,
+  EvidenceRequests,
+  WeeklyQueue,
+} from "@/components/operations/workspaces";
+import { ChangeInbox } from "@/components/operations/forms";
 import { PrivacyWorkspace } from "@/components/privacy/workspace";
 import Image from "next/image";
 import type { CSSProperties } from "react";
@@ -29,6 +35,7 @@ import { ReportingWorkspace } from "@/components/reporting/workspace";
 import { WorkforceWorkspace } from "@/components/workforce/workspace";
 import { Button } from "@/components/ui/button";
 import {
+  canEditRecords,
   isManager,
   requireWorkspaceSession,
   workspaceMemberships,
@@ -37,6 +44,9 @@ import { signOut } from "@/lib/auth/actions";
 
 const sections = [
   { route: "dashboard", title: "Dashboard" },
+  { route: "actions", title: "Weekly actions" },
+  { route: "adviser", title: "Adviser work queue" },
+  { route: "changes", title: "Change review" },
   { route: "people", title: "People" },
   { route: "workforce", title: "Workforce" },
   { route: "reporting", title: "Reporting" },
@@ -112,8 +122,20 @@ export default async function WorkspacePage({
   const partnersOpen = section === "partners";
   const privacyOpen = section === "privacy";
   const dashboard = section === "dashboard";
+  const adviserOpen = section === "adviser";
+  const adviserAccess = memberships.some((item) => item.via_partner);
+  if (
+    (adviserOpen && !adviserAccess) ||
+    (section === "changes" && !canEditRecords(membership.role))
+  )
+    notFound();
   const requiredPlan =
-    free && !dashboard && !billingOpen && !partnersOpen && !privacyOpen
+    free &&
+    !dashboard &&
+    !billingOpen &&
+    !partnersOpen &&
+    !privacyOpen &&
+    !adviserOpen
       ? "core"
       : !pro && (section === "workforce" || section === "key-personnel")
         ? "pro"
@@ -121,7 +143,7 @@ export default async function WorkspacePage({
   const workspaceAllowed = !requiredPlan;
 
   return (
-    <div className="min-h-screen bg-slate-50 md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
+    <div className="min-h-screen bg-background md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-10 focus:rounded-md focus:bg-white focus:p-3"
@@ -155,13 +177,22 @@ export default async function WorkspacePage({
         <nav aria-label="Workspace">
           <ul className="grid gap-1">
             {sections
+              .filter((item) => item.route !== "adviser" || adviserAccess)
+              .filter(
+                (item) =>
+                  item.route !== "changes" || canEditRecords(membership.role),
+              )
               .filter((item) => !("adminOnly" in item) || manager)
               .filter(
                 (item) =>
                   !free ||
-                  ["dashboard", "billing", "partners", "privacy"].includes(
-                    item.route,
-                  ),
+                  [
+                    "dashboard",
+                    "billing",
+                    "partners",
+                    "privacy",
+                    "adviser",
+                  ].includes(item.route),
               )
               .filter(
                 (item) =>
@@ -231,6 +262,26 @@ export default async function WorkspacePage({
         {requiredPlan && (
           <UpgradePrompt organisation={organisation} plan={requiredPlan} />
         )}
+        {adviserOpen && <AdviserQueue />}
+        {dashboard && !free && (
+          <WeeklyQueue tenant={organisation} role={membership.role} />
+        )}
+        {workspaceAllowed && section === "actions" && (
+          <WeeklyQueue
+            tenant={organisation}
+            role={membership.role}
+            full
+            selected={(await searchParams).item}
+          />
+        )}
+        {workspaceAllowed && section === "changes" && (
+          <ChangeInbox tenant={organisation} />
+        )}
+        {workspaceAllowed &&
+          section === "documents" &&
+          pro &&
+          manager &&
+          !delegated && <EvidenceRequests tenant={organisation} />}
         {dashboard && free && (
           <HealthChecklistWorkspace
             organisation={organisation}
@@ -318,6 +369,9 @@ export default async function WorkspacePage({
         )}
         {[
           "dashboard",
+          "actions",
+          "adviser",
+          "changes",
           "people",
           "workforce",
           "reporting",

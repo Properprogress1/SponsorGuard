@@ -5,8 +5,8 @@ export const partnerRoles = {
 } as const;
 export type PartnerRole = keyof typeof partnerRoles;
 export const defaultBrand = {
-  primary_colour: "#0f172a",
-  accent_colour: "#e2e8f0",
+  primary_colour: "#202431",
+  accent_colour: "#e8c76b",
   logo_data: null,
 };
 export type PartnerBrand = {
